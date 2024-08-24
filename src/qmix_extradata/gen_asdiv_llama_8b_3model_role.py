@@ -1,5 +1,4 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='2,3'
 import random
 from chat_utils import format_tokens
 import torch
@@ -222,14 +221,10 @@ if __name__ == "__main__":
 
 
     generated_description = {}
-
-    # questions = read_jsonl("/data01/lihaoran/lhr/maq_ppo/dataset/ASDiv/ASDiv.json")
-    # load arguments from terminal
     args_extra = arg_parser()
     print('*****************************')
     print(args_extra)
     print('*****************************')
-    # print(f"API_KEY: {API_KEY}")
     set_random_seed(args_extra.random_seed)
     # load dataset
     dataloader = create_dataloader(args_extra)
