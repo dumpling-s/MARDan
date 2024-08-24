@@ -17,7 +17,7 @@ B_INST, E_INST = "[INST]", "[/INST]"
 B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
 def format_tokens(dialog, tokenizer):
     prompt_tokens = []
-    if dialog[0]["role"] == "system":   #如果是 system ，由於llama沒有這個，所以去掉
+    if dialog[0]["role"] == "system":
         dialog = [
             {
                 "role": dialog[1]["role"],
