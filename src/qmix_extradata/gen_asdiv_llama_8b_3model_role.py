@@ -351,7 +351,7 @@ if __name__ == "__main__":
 
         try:
             # 定义文件名格式
-            filename_format = "gsm_{}_{}_{}.json"
+            filename_format = "asdiv_{}_{}_{}.json"
             # 获取当前时间
             now = datetime.datetime.now()
             timestamp = now.strftime("%Y%m%d%H%M%S")  # 格式化为YYYYMMDDHHMMSS
