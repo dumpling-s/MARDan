@@ -1,5 +1,4 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='2,3'
 import random
 from chat_utils import format_tokens
 import torch
@@ -227,7 +226,6 @@ if __name__ == "__main__":
     print('*****************************')
     print(args_extra)
     print('*****************************')
-    # print(f"API_KEY: {API_KEY}")
     set_random_seed(args_extra.random_seed)
     # load dataset
     dataloader = create_dataloader(args_extra)
@@ -240,7 +238,7 @@ if __name__ == "__main__":
     args = qmix_args(args)
     # 使用qmix_args函数修改参数(env
 
-    ppo_data = load_dataset('/data01/lihaoran/lhr/maq_ppo/saved_data/ppo_gsm', split="train")
+    ppo_data = load_dataset('', split="train")
 
     epochs = 10
     for epoch_w in range(epochs):
@@ -258,8 +256,8 @@ if __name__ == "__main__":
              Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your 
              response. """.format(question)}] for agent_num in range(agents_num)]
 
-            if os.path.exists('/data01/lihaoran/lhr/maq_ppo/src/qmix_tuning_0521/my_ppo_model/pytorch_model.bin'):
-                torch.load('/data01/lihaoran/lhr/maq_ppo/src/qmix_tuning_0521/my_ppo_model/pytorch_model.bin')
+            if os.path.exists(''):
+                torch.load('')
             else:
                 print('没有已保存的ppo模型')
 
@@ -354,23 +352,23 @@ if __name__ == "__main__":
 
         try:
             # 定义文件名格式
-            filename_format = "svamp_{}_{}_{}.json"
+            filename_format = "addsub_{}_{}_{}.json"
             # 获取当前时间
             now = datetime.datetime.now()
             timestamp = now.strftime("%Y%m%d%H%M%S")  # 格式化为YYYYMMDDHHMMSS
             # 格式化文件名，替换{}中的内容
             filename = filename_format.format(agents_num, rounds, timestamp)
             # 打开文件准备写入
-            with open("/data01/lihaoran/lhr/maq_ppo/saved_data/gsm/" + filename, 'w') as file:
+            with open("" + filename, 'w') as file:
                 # 将描述序列化为JSON格式并写入文件
                 json.dump(generated_description, file, indent=4)
                 print('创建成功',str(file))
             print(f"JSON file '{filename}' has been created.")
-            Eval_gsm = Eval_Gsm("/data01/lihaoran/lhr/maq_ppo/saved_data/gsm/" + filename)
+            Eval_gsm = Eval_Gsm("" + filename)
             accuracies = Eval_gsm.eval_gsm()
             # print(accuracies)
             if accuracies >= 0.35:
-                with open("/data01/lihaoran/lhr/maq_ppo/saved_data/gsm/" + filename, 'a') as file:
+                with open("" + filename, 'a') as file:
                     # 将描述序列化为JSON格式并写入文件
                     file.write('\naccuracies:')
                     file.write(str(accuracies))
@@ -378,10 +376,3 @@ if __name__ == "__main__":
                 break
         except Exception as e:
             print("An error occurred while saving the file:", e)
-
-        # ppo=PPO('/data01/lihaoran/lhr/maq_ppo/saved_data/ppo_gsm')
-        # ppo.run()
-        # if os.path.exists('./my_ppo_model/ppo.pth'):
-        #     model.load_state_dict(torch.load('./my_ppo_model/ppo.pth'))
-        # else:
-        #     print('没有已保存的ppo模型')
