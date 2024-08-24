@@ -1,7 +1,6 @@
 from gym.core import Env
 import argparse
 import numpy as np
-# __package__ = '.src.qmix_33-master'
 from utils import RewardFunction
 from tqdm import tqdm
 import torch
@@ -44,11 +43,6 @@ def qmix_args(args):
     # prevent gradient explosion
     args.grad_norm_clip = 10
 
-    #新加：
-    args.reward_scale_rate = 20
-    args.merged_dataset = "/home/lihaoran/lhr/maq/saved_data/reward/merged_dataset.json"
-    args.standard_answer = []
-
 
     return args
 
@@ -61,9 +55,8 @@ def get_common_args():
     parser.add_argument('--state_space', type=int, default=1000, help='state_space')
 
 
-    parser.add_argument('--action_space', type=int, default=32000, help='action space:因为文本数据的空间是连续的，动作空间应该是连续的；'
-                                                                    '使用的是一个rnn，其输出层有一个大小为词汇表大小的softmax层，这里每个单元对应一个词汇表中的单词，输出层的尺寸就是词汇表的大小，即 action_space')
-    parser.add_argument('--num_actions', type=int, default=256, help='智能体至少需要能够执行两种动作（初始回答和基于其他智能体回答的更新;  因为环境要根据动作计算奖励，要把这个改为环境根据回答答案计算奖励')
+    parser.add_argument('--action_space', type=int, default=32000, help='action space:因为文本数据的空间是连续的，动作空间应该是连续的')
+    parser.add_argument('--num_actions', type=int, default=256, help='智能体至少需要能够执行两种动作（初始回答和基于其他智能体回答的更新;')
     parser.add_argument('--num_agents', type=int, default=3, help='number of agents')
     parser.add_argument('--max_episode_steps', type=int, default=1, help='最大episode步长')
 
@@ -94,7 +87,7 @@ def get_common_args():
     parser.add_argument('--response ', type=dict, default=[], help='')
     parser.add_argument('--state', type=dict, default=[], help='所有内容')
     parser.add_argument('--reward_scale_rate', type=int, default=20, help='奖励范围')
-    parser.add_argument('--gsm_dataset', type=str, default='/home/lihaoran/lhr/maq/saved_data/gsm/gsm_3_2_20240319141252.json', help='处理数据集：包括correct、question、response(三个智能体的回答')
+    parser.add_argument('--gsm_dataset', type=str, default='', help='处理数据集：包括correct、question、response(三个智能体的回答')
 
     args = parser.parse_args()
     return args
