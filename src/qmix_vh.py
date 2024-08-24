@@ -1,6 +1,5 @@
 import torch
 import os
-__package__ = '.src.qmix_33-master'
 from qmix_net import RNN
 from qmix_net import QMixNet
 from qmix_net import RNN_action
@@ -103,7 +102,6 @@ class QMIX:
         s = torch.tensor(s, dtype=torch.float32)
         q_targets = q_targets.squeeze(1)
         s_next = torch.tensor(s_next, dtype=torch.float32)
-        # q_targets[:] = - 9999999
         q_total_eval = self.eval_qmix_net(q_evals, s)
         q_total_target = self.target_qmix_net(q_targets, s_next)
 
@@ -165,10 +163,10 @@ class QMIX:
 
         q_eval = value_e
         q_target = value_t
-        q_eval = q_eval.view(episode_num, self.num_agents, -1)  # torch.Size([1, 3, 3750])
-        q_target = q_target.view(episode_num, self.num_agents, -1)  # torch.Size([1, 3, 3750])
-        q_evals.append(q_eval)  #
-        q_targets.append(q_target)  #
+        q_eval = q_eval.view(episode_num, self.num_agents, -1)
+        q_target = q_target.view(episode_num, self.num_agents, -1)
+        q_evals.append(q_eval) 
+        q_targets.append(q_target) 
 
 
         q_evals = torch.stack(q_evals, dim=1)
@@ -179,7 +177,7 @@ class QMIX:
         self.eval_hidden = torch.zeros((episode_num, self.num_agents, self.args.rnn_hidden_dim))
         self.target_hidden = torch.zeros((episode_num, self.num_agents, self.args.rnn_hidden_dim))
 
-    def save_model(self, train_step):  # 方法未修改
+    def save_model(self, train_step):
         num = str(train_step // self.args.save_cycle)
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir)
