@@ -1,6 +1,5 @@
 import torch
 import os
-# __package__ = '.src.qmix_33-master'
 from qmix_net import RNN
 from qmix_net import QMixNet
 from qmix_net import RNN_action
@@ -98,15 +97,9 @@ class QMIX:
         s, s_next, u, r, avail_u, terminated = batch['s'], batch['s_next'], batch['u'], \
                                                               batch['r'],  batch['avail_u'], batch['terminated']
         mask = 1 - batch["padded"]
-        # torch.Size([10,5,3,256) 应该是
 
         role_loss, role_c_dis_loss, role_ce_loss = self.dis_net.forward(batch, torch.zeros((episode_num, self.num_agents, self.args.rnn_hidden_dim)))
         # reg_loss /= batch.max_seq_length
-
-
-
-
-
 
         q_evals, q_targets = self.get_q_values(batch, model)
         if self.args.cuda:
@@ -177,8 +170,8 @@ class QMIX:
         q_target = value_t
         q_eval = q_eval.view(episode_num, self.num_agents, -1)
         q_target = q_target.view(episode_num, self.num_agents, -1)
-        q_evals.append(q_eval)  #
-        q_targets.append(q_target)  #
+        q_evals.append(q_eval) 
+        q_targets.append(q_target) 
 
 
         q_evals = torch.stack(q_evals, dim=1)
