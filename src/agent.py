@@ -1,7 +1,5 @@
 import numpy as np
 import torch
-
-# __package__ = '.src.qmix_33-master'
 from qmix_vh_dis import QMIX
 from transformers import AutoModelForCausalLM, LlamaTokenizer
 from trl import AutoModelForCausalLMWithValueHead, AutoModelForSeq2SeqLMWithValueHead
@@ -15,8 +13,8 @@ model_WithValueHead = AutoModelForCausalLMWithValueHead.from_pretrained(
     rope_scaling={
         "type": "llama3",
         "factor": 8.0,
-        "low_freq_factor": 1.0, # 如果之前已经添加
-        "high_freq_factor": 4.0,  # 如果之前已经添加
+        "low_freq_factor": 1.0,
+        "high_freq_factor": 4.0,
         "original_max_position_embeddings": 8192
     },
     device_map='auto',
