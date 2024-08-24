@@ -1,6 +1,3 @@
-'''
-未修改
-'''
 import torch.nn as nn
 import torch
 import torch.nn.functional as f
