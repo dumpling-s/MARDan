@@ -362,7 +362,7 @@ if __name__ == "__main__":
             # 格式化文件名，替换{}中的内容
             filename = filename_format.format(agents_num, rounds, timestamp)
             # 打开文件准备写入
-            with open("/data01/lihaoran/lhr/maq_ppo/saved_data/gsm/" + filename, 'w') as file:
+            with open("" + filename, 'w') as file:
                 # 将描述序列化为JSON格式并写入文件
                 json.dump(generated_description, file, indent=4)
                 print('创建成功',str(file))
