@@ -1,27 +1,6 @@
-#coding:utf-8-*-
-"""
-@Author:yanzhou
-@time:2024/8/5  22:21
-"""
-
 from pathlib import Path
 import time
 import argparse
-
-# def main():
-#     # load arguments from terminal
-#     args = arg_parser()
-#     print('*****************************')
-#     print(args)
-#     print('*****************************')
-#
-#     print(f"API_KEY: {API_KEY}")
-#
-#     set_random_seed(args.random_seed)
-#
-#     # load dataset
-#     dataloader = create_dataloader(args)
-
 
 def arg_parser():
     parser = argparse.ArgumentParser(description="CoT")
@@ -32,7 +11,7 @@ def arg_parser():
                  "multiarith", "time_zone"], help="dataset to inference"
     )
     parser.add_argument(
-        "--prompt_path", type=str, default="/data01/lihaoran/lhr/maq_ppo/inference_prompts/gsm8k_k=10",
+        "--prompt_path", type=str, default="",
         help="prompts to use"
     )
     parser.add_argument(
@@ -87,37 +66,37 @@ def arg_parser():
     print(f"Temperature: {args.temperature}")
 
     if args.dataset == "gsm8k":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/GSM8K/test.jsonl"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer (arabic numerals) is"
     elif args.dataset == "svamp":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/SVAMP/SVAMP.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer (arabic numerals) is"
     elif args.dataset == "asdiv":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/ASDiv/ASDiv.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer (arabic numerals) is"
     elif args.dataset == "aqua":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/AQuA/test.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "The answer is"
     elif args.dataset == "csqa":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/CSQA/dev_rand_split.jsonl"
+        args.dataset_path = ""
         args.direct_answer_trigger = "So the answer is"
     elif args.dataset == "strategyqa":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/strategyQA/task.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer (Yes or No) is"
     elif args.dataset == "last_letters":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/last_letters/last_letters_test.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer is"
     elif args.dataset == "addsub":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/MAWPS/AddSub.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer (arabic numerals) is"
     elif args.dataset == "singleeq":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/MAWPS/SingleEq.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer (arabic numerals) is"
     elif args.dataset == "multiarith":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/MAWPS/MultiArith.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer (arabic numerals) is"
     elif args.dataset == "time_zone":
-        args.dataset_path = "/data01/lihaoran/lhr/maq_ppo/dataset/timezone_convert/timezone_convertion_test.json"
+        args.dataset_path = ""
         args.direct_answer_trigger = "\nTherefore, the answer is"
     else:
         raise ValueError("dataset is not properly defined ...")
