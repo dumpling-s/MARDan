@@ -24,13 +24,6 @@ from utils_extra import set_random_seed,create_dataloader
 from glob import glob
 import pandas as pd
 
-win_rates = []
-# 初始化胜率列表
-episode_rewards = []
-# 初始化每集奖励列表
-train_steps = 0
-# 初始化训练步骤计数器
-
 
 
 
@@ -366,13 +359,10 @@ if __name__ == "__main__":
             Eval_gsm = Eval_Gsm("" + filename)
             accuracies = Eval_gsm.eval_gsm()
             # print(accuracies)
-            if accuracies >= 0.35:
-                with open("" + filename, 'a') as file:
-                    # 将描述序列化为JSON格式并写入文件
-                    file.write('\naccuracies:')
-                    file.write(str(accuracies))
-                print('accuracies>=35')
-                break
+            with open("" + filename, 'a') as file:
+                # 将描述序列化为JSON格式并写入文件
+                file.write('\naccuracies:')
+                file.write(str(accuracies))
         except Exception as e:
             print("An error occurred while saving the file:", e)
 
