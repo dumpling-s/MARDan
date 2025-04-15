@@ -19,11 +19,11 @@ class AgentWithLLMAndRNN(nn.Module):
 
     def forward(self, input_ids, attention_mask, hidden_state):
         outputs = self.llm(input_ids=input_ids.unsqueeze(0), attention_mask=attention_mask, return_dict=True, output_hidden_states=True)
-        last_hidden = outputs.hidden_states[-1]  # [B, T, D]
-        pooled = last_hidden[:, 0, :]  # [B, D]
+        last_hidden = outputs.hidden_states[-1]
+        pooled = last_hidden[:, 0, :]
 
-        rnn_output, next_hidden = self.rnn(pooled.to(dtype=torch.float32), hidden_state.unsqueeze(0))   # [B, 1, H], [1, B, H]
-        q_value = self.q_head(rnn_output.squeeze(1))  # [B, num_actions]
+        rnn_output, next_hidden = self.rnn(pooled.to(dtype=torch.float32), hidden_state.unsqueeze(0))
+        q_value = self.q_head(rnn_output.squeeze(1))
 
         return q_value, next_hidden
         
@@ -46,20 +46,6 @@ class RNN(nn.Module):
         return q, h
 
 
-class RNN_action(nn.Module):
-    def __init__(self, input_shape, args):
-        super(RNN_action, self).__init__()
-        self.args = args
-        self.fc1 = nn.Linear(input_shape, args.rnn_hidden_dim)
-        self.rnn = nn.GRUCell(args.rnn_hidden_dim, args.rnn_hidden_dim)
-        self.fc2 = nn.Linear(args.rnn_hidden_dim, args.action_space)
-
-    def forward(self, obs, hidden_state):
-        x = f.relu(self.fc1(obs))
-        h = self.rnn(x, hidden_state)
-        q = self.fc2(h).view(150, 32000)
-        # print(q)
-        return q, h
 class QMixNet(nn.Module):
     def __init__(self, args):
         super(QMixNet, self).__init__()
