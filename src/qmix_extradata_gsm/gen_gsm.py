@@ -25,6 +25,7 @@ from glob import glob
 import pandas as pd
 
 
+
 # 方法用于从文件中获得各个文本
 def response_saved_data(generated_description):
     states, questions, responses, observations, standard_answers = [], [], [], [], []
@@ -95,45 +96,6 @@ def pro_data(question, response, observation, standard_answer, state):
     states = process_data_for_trainer_1000(['\n'.join(state)])
     return np.array(questions[0]), np.array(responses), np.array(observations), np.array(standard_answers[0]), np.array(states[0])
 
-
-
-
-device = torch.device("cuda:0")
-max_new_tokens = 500
-history_max_len = 2000
-top_p = 0.9
-temperature = 0.35
-repetition_penalty = 1.2
-model_id = ""
-
-model1 =  AutoModelForCausalLM.from_pretrained(
-    model_id,
-    device_map='auto',
-    torch_dtype=torch.float16,
-    eos_token_id=2,
-    pad_token_id=2,
-)
-model2 =  AutoModelForCausalLM.from_pretrained(
-    model_id,
-    device_map='auto',
-    torch_dtype=torch.float16,
-    eos_token_id=2,
-    pad_token_id=2,
-)
-model3 =  AutoModelForCausalLM.from_pretrained(
-    model_id,
-    device_map='auto',
-    torch_dtype=torch.float16,
-    eos_token_id=2,
-    pad_token_id=2,
-)
-
-tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
-
-
-
-history_token_ids = tokenizer('<s>', return_tensors="pt").input_ids
-
 def construct_message(agents, question, idx,i):
     if len(agents) == 0:
         return {"role": "user", "content": "Can you double check that your answer is correct."
@@ -203,51 +165,86 @@ def build_dataset(query_dataset, input_min_text_length=2, input_max_text_length=
         ds.set_format(type="torch", output_all_columns=True)
 
         return ds
+lora_config = LoraConfig(
+    r=8,
+    lora_alpha=32,
+    target_modules=["q_proj", "v_proj"],
+    lora_dropout=0.1,
+    bias="none",
+    task_type=TaskType.CAUSAL_LM,
+)
+
+model1 = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map='auto',
+    torch_dtype=torch.float16,
+    eos_token_id=2,
+    pad_token_id=2,
+    offload_state_dict=False,
+)
+# model1.gradient_checkpointing_enable()
+model2 = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map='auto',
+    torch_dtype=torch.float16,
+    eos_token_id=2,
+    pad_token_id=2,
+    offload_state_dict=False,
+)
+# model2.gradient_checkpointing_enable()
+model3 = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map='auto',
+    torch_dtype=torch.float16,
+    eos_token_id=2,
+    pad_token_id=2,
+    offload_state_dict=False,
+)
+# model3.gradient_checkpointing_enable()
+tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
+history_token_ids = tokenizer('<s>', return_tensors="pt").input_ids
+
+model1_lora = get_peft_model(model1, lora_config)
+model2_lora = get_peft_model(model2, lora_config)
+model3_lora = get_peft_model(model3, lora_config)
+
 if __name__ == "__main__":
+    args = get_common_args()
+    args = qmix_args(args)
+
+    args.model_lora = model1_lora, model2_lora, model3_lora
+    env = RandomEnv(args)
+    agents = Agents(args)
+    worker = RolloutWorker(env, agents, args)
+    buffer = ReplayBuffer(args)
+
     agents_num = 3
     rounds = 2
-    random.seed(0)
-    model = model1, model2, model3
 
+    model = model1, model2, model3
 
     generated_description = {}
 
     questions = read_jsonl("")
-    random.shuffle(questions)
-    # print('数据长度为：',len(questions))
-    args = get_common_args()
-    # 获取公共参数(env
-    args = qmix_args(args)
-    # 使用qmix_args函数修改参数(env
 
-    ppo_data = load_dataset('', split="train")
-
-    epochs = 10
-    for epoch_w in range(epochs):
-        for data in tqdm(questions[:100]):
-
-            # ppo_data=ppo_data.shuffle().train_test_split(test_size=0.005)['test']
-            # ppo_data=build_dataset(ppo_data)
-            # ppo = PPO(ppo_data)
-            # ppo.run()
-
+    for epoch in range(args.n_epoch):
+        random.shuffle(questions)
+        print('train epoch {}'.format(epoch))
+        # 清空存储的剧集数据
+        episodes = []
+        for episode_idx in tqdm(range(args.n_episodes)):
+            data = questions[episode_idx]
             question = data['question']
             answer = data['answer']
-
             agent_contexts = [[{"role": "user", "content": """Can you solve the following math problem? {} Explain your reasoning.
              Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your 
              response. """.format(question)}] for agent_num in range(agents_num)]
-
-            if os.path.exists(''):
-                torch.load('')
-            else:
-                print('没有已保存的ppo模型')
 
             for round in range(rounds):
                 for i, agent_context in enumerate(agent_contexts):
                     if round != 0:
                         agent_contexts_other = agent_contexts[:i] + agent_contexts[i + 1:]
-                        message = construct_message(agent_contexts_other, question, 2 * round - 1,i)
+                        message = construct_message(agent_contexts_other, question, 2 * round - 1, i)
                         agent_context.append(message)
 
                     completion = format_tokens(agent_context, tokenizer)
@@ -263,12 +260,10 @@ if __name__ == "__main__":
                                                     repetition_penalty=repetition_penalty,
                                                     eos_token_id=tokenizer.eos_token_id,
                                                     pad_token_id=tokenizer.eos_token_id,
-                                                    attention_mask=torch.ones(completion.shape,dtype=torch.long,device=device)
+                                                    attention_mask=torch.ones(completion.shape,
+                                                                              dtype=torch.long,
+                                                                              device=device)
                                                     )
-                    # try:
-
-                    # except Exception as e:
-                    #     print("error:处理的文本为", completion)
                     response = tokenizer.batch_decode(outputs)
 
                     assistant_message = extract_content_after_inst(response)
@@ -280,78 +275,36 @@ if __name__ == "__main__":
             questions_q, responses_q, observations_q, standard_answers_q = response_saved_data(
                 generated_description)  # 得到文本
             states_q = []
-            questions_q, responses_q, observations_q, standard_answers_q, states_q = pro_data(questions_q, responses_q,
+            questions_q, responses_q, observations_q, standard_answers_q, states_q = pro_data(questions_q,
+                                                                                              responses_q,
                                                                                               observations_q,
                                                                                               standard_answers_q,
                                                                                               states_q)  # 得到encode编码
 
             save_path = args.result_dir + '/' + args.alg
-            # 设置保存结果的路径
 
             args.standard_answer = standard_answers_q
             args.state = states_q
             args.observation = observations_q
             args.response = responses_q
+            # args.round = rounds
 
-            env = RandomEnv(args)
-            # 创建一个随机环境实例，args参数用于配置环境(env
-            agents = Agents(args)
-            # 创建智能体实例，args参数用于配置智能体的行为(agent
-            worker = RolloutWorker(env, agents, args)
-            # 创建RolloutWorker实例，用于在环境中执行剧集
-            buffer = ReplayBuffer(args)
+            episode, _ = worker.generate_episode(episode_idx)
+            episodes.append(episode)
+        episode_batch = episodes[0]
+        episodes.pop(0)
+        for episode in episodes:
+            for key in episode_batch.keys():
+                try:
+                    episode_batch[key] = np.concatenate((episode_batch[key], episode[key]), axis=0)
+                except Exception as e:
+                    print('episode_batch[key].shape=', episode_batch[key].shape)
+                    print('episode[key].shape=', np.array([episode[key]]).shape)
+                    print('错误：', e)
+        buffer.store_episode(episode_batch)
 
-            for epoch in range(args.n_epoch):
-                # 打印当前运行和训练轮次
-                # print('Run {}, train epoch {}'.format(epoch_w, epoch))
-                # 清空存储的剧集数据
-                episodes = []
-                # 生成剧集数据
-                for episode_idx in range(args.n_episodes):
-                    episode, _ = worker.generate_episode(episode_idx)
-                    episodes.append(episode)
-                # 取第一个剧集数据进行处理
-                episode_batch = episodes[0]
-                episodes.pop(0)
-                # 合并其他剧集数据
-                for episode in episodes:
-                    for key in episode_batch.keys():
-                        try:
-                            episode_batch[key] = np.concatenate((episode_batch[key], episode[key]), axis=0)
-                        except Exception as e:
-                            print('episode_batch[key].shape=', episode_batch[key].shape)
-                            print('episode[key].shape=', np.array([episode[key]]).shape)
-                            print('错误：', e)
-                    # 将剧集数据存储到缓冲区
-                # buffer.store_episode(episode_batch)
-
-                # 从缓冲区随机取样进行训练
-                for train_step in range(args.train_steps):
-                    # mini_batch = buffer.sample(min(buffer.current_size, args.batch_size))
-                    agents.train(episode_batch, train_steps)
-                    train_steps += 1
-                # torch.save(agents[0].state_dict(), f"model_{epoch}.pth")
-
-        try:
-            # 定义文件名格式
-            filename_format = "gsm_{}_{}_{}.json"
-            # 获取当前时间
-            now = datetime.datetime.now()
-            timestamp = now.strftime("%Y%m%d%H%M%S")  # 格式化为YYYYMMDDHHMMSS
-            # 格式化文件名，替换{}中的内容
-            filename = filename_format.format(agents_num, rounds, timestamp)
-            # 打开文件准备写入
-            with open("" + filename, 'w') as file:
-                # 将描述序列化为JSON格式并写入文件
-                json.dump(generated_description, file, indent=4)
-                print('创建成功',str(file))
-            print(f"JSON file '{filename}' has been created.")
-            Eval_gsm = Eval_Gsm("" + filename)
-            accuracies = Eval_gsm.eval_gsm()
-            # print(accuracies)
-            with open("" + filename, 'a') as file:
-                # 将描述序列化为JSON格式并写入文件
-                file.write('\naccuracies:')
-                file.write(str(accuracies))
-        except Exception as e:
-            print("An error occurred while saving the file:", e)
+        # 从缓冲区随机取样进行训练
+        for train_step in range(args.train_steps):
+            mini_batch = buffer.sample(min(buffer.current_size, args.batch_size))
+            agents.train(mini_batch, train_steps)
+            train_steps += 1
